@@ -1,5 +1,7 @@
 # Firebaser v0.9
 
+Nuget package: https://www.nuget.org/packages/Firebaser
+
 ### A lightweight mono 3.5 compatible connector to the legacy firebase api.
 
 ## About Firebase
