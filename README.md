@@ -1,4 +1,4 @@
-# Firebaser v0.9
+# Firebaser v0.9.1
 
 Nuget package: https://www.nuget.org/packages/Firebaser
 
@@ -100,16 +100,16 @@ The resulting object or undefined for GET methods.
 ### Convenience methods
 ```cs  
 // GET
-public TResult Get<TResult>(string objectPath, bool shallow = false, NameValueCollection queryParams = null) where TResult : class
+public TResult Get<TResult>(string objectPath, bool shallow = false, NameValueCollection queryParams = null)
 
 // POST
-public string Post<TObject>(string objectPath, TObject obj, NameValueCollection queryParams = null) where TObject : class
+public string Post<TObject>(string objectPath, TObject obj, NameValueCollection queryParams = null)
 
 // PUT
-public string Put<TObject>(string objectPath, TObject obj, NameValueCollection queryParams = null) where TObject : class
+public string Put<TObject>(string objectPath, TObject obj, NameValueCollection queryParams = null)
 
 // PATCH
-public string Patch<TObject>(string objectPath, TObject obj, NameValueCollection queryParams = null) where TObject : class
+public string Patch<TObject>(string objectPath, TObject obj, NameValueCollection queryParams = null)
 
 // DELETE
 public string Delete(string objectPath, NameValueCollection queryParams = null)
@@ -119,7 +119,7 @@ public string Delete(string objectPath, NameValueCollection queryParams = null)
 
 For now, there is no error handling.
 
-  
+
 ---
 
 MIT License  
