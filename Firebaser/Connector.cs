@@ -35,7 +35,7 @@ namespace Firebaser
 			this.secret = secret;
 		}
 
-		public TResult Send<TObject, TResult>(Method method, string objectPath, TObject obj = default(TObject), bool shallow = false, NameValueCollection queryParams = null) where TResult : class
+		public TResult Send<TObject, TResult>(Method method, string objectPath, TObject obj = default(TObject), bool shallow = false, NameValueCollection queryParams = null)
 		{
 			using (new PauseValidation())
 			{
@@ -44,30 +44,30 @@ namespace Firebaser
 				var client = new WebClient { QueryString = query, Encoding = Encoding.UTF8 };
 				var json = JSON.ToJSON(obj, new JSONParameters() { UseExtensions = false });
 				if (objectPath.Length > 0 && !objectPath.StartsWith("/")) objectPath = "/" + objectPath;
-				var result = method == Method.GET ?
+				var result = method == Method.GET || method == Method.DELETE ?
 					client.DownloadString(firebaseUrl + objectPath + ".json") :
 					client.UploadString(firebaseUrl + objectPath + ".json", method.ToString(), json);
 				if (result == null) return default(TResult);
-				return typeof(TResult) == typeof(string) ? result as TResult : JSON.ToObject<TResult>(result);
+				return typeof(TResult) == typeof(string) ? (TResult)(result as object) : JSON.ToObject<TResult>(result);
 			}
 		}
 
-		public TResult Get<TResult>(string objectPath, bool shallow = false, NameValueCollection queryParams = null) where TResult : class
+		public TResult Get<TResult>(string objectPath, bool shallow = false, NameValueCollection queryParams = null)
 		{
 			return Send<object, TResult>(Method.GET, objectPath, null, shallow, queryParams);
 		}
 
-		public string Post<TObject>(string objectPath, TObject obj, NameValueCollection queryParams = null) where TObject : class
+		public string Post<TObject>(string objectPath, TObject obj, NameValueCollection queryParams = null)
 		{
 			return Send<TObject, string>(Method.POST, objectPath, obj, false, queryParams);
 		}
 
-		public string Put<TObject>(string objectPath, TObject obj, NameValueCollection queryParams = null) where TObject : class
+		public string Put<TObject>(string objectPath, TObject obj, NameValueCollection queryParams = null)
 		{
 			return Send<TObject, string>(Method.PUT, objectPath, obj, false, queryParams);
 		}
 
-		public string Patch<TObject>(string objectPath, TObject obj, NameValueCollection queryParams = null) where TObject : class
+		public string Patch<TObject>(string objectPath, TObject obj, NameValueCollection queryParams = null)
 		{
 			return Send<TObject, string>(Method.PATCH, objectPath, obj, false, queryParams);
 		}
