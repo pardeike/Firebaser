@@ -1,4 +1,4 @@
-# Firebaser v0.9.1
+# Firebaser v0.9.2
 
 Nuget package: https://www.nuget.org/packages/Firebaser
 
