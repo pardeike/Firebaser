@@ -86,7 +86,7 @@ A connector instance that is used to execute commands to the REST API.
 
 ### Generic send
 ```cs
-public TResult Send<TObject, TResult>(Method method, string objectPath, TObject obj = default(TObject), bool shallow = false, NameValueCollection queryParams = null) where TResult : class
+public TResult Send<TObject, TResult>(Method method, string objectPath, TObject obj = default(TObject), bool shallow = false, NameValueCollection queryParams = null)
 ```  
 **Arguments**  
 `method` - enum `Method`, defines the HTTP method to use  
