@@ -44,9 +44,23 @@ namespace Firebaser
 				var client = new WebClient { QueryString = query, Encoding = Encoding.UTF8 };
 				var json = JSON.ToJSON(obj, new JSONParameters() { UseExtensions = false });
 				if (objectPath.Length > 0 && !objectPath.StartsWith("/")) objectPath = "/" + objectPath;
-				var result = method == Method.GET || method == Method.DELETE ?
-					client.DownloadString(firebaseUrl + objectPath + ".json") :
-					client.UploadString(firebaseUrl + objectPath + ".json", method.ToString(), json);
+				string result = null;
+				var path = firebaseUrl + objectPath + ".json";
+				switch (method)
+				{
+					case Method.GET:
+						result = client.DownloadString(path);
+						break;
+					case Method.POST:
+					case Method.PUT:
+					case Method.PATCH:
+						result = client.UploadString(path, method.ToString(), json);
+						break;
+					case Method.DELETE:
+						client.Headers.Add("X-HTTP-Method-Override", Method.DELETE.ToString());
+						result = client.DownloadString(path);
+						break;
+				}
 				if (result == null) return default(TResult);
 				return typeof(TResult) == typeof(string) ? (TResult)(result as object) : JSON.ToObject<TResult>(result);
 			}
