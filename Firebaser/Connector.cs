@@ -37,6 +37,9 @@ namespace Firebaser
 
 		public TResult Send<TObject, TResult>(Method method, string objectPath, TObject obj = default(TObject), bool shallow = false, NameValueCollection queryParams = null)
 		{
+			if (!InternetAvailability.IsAvailable())
+				return default(TResult);
+
 			using (new PauseValidation())
 			{
 				var query = new NameValueCollection { { "auth", secret }, { "shallow", shallow ? "true" : "false" } };
