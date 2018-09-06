@@ -1,4 +1,4 @@
-# Firebaser v0.9.2
+# Firebaser
 
 Nuget package: https://www.nuget.org/packages/Firebaser
 
@@ -72,52 +72,84 @@ test-firebaser.firebaseio.com
       +- Username  
 ```
 
+---
 ## Firebaser API
+
+### Checking for an internet connection
+
+```cs
+public static class InternetAvailability
+{
+      public static bool IsAvailable(bool forceCheck = false)
+}
+```
+
+Example  
+```cs
+if(InternetAvailability.IsAvailable()
+{
+      // in here, you likely have internet
+}
+```
+*Note: The status will only be updated every 2 seconds so pass `true` in `forceCheck` to get an up-to-date status. Still, `IsAvailable` runs an asyncronous ping() which will time out after
+300ms. To 100% make sure you get a correct status, you need to wait at least 300ms and call
+the method again (both with forceCheck=true).*  
 
 ### Constructor
 ```cs
 public Connector(string project, string secret)
 ```  
-**Arguments**  
-`project` - name of your database (before "firebaseio.com")  
-`secret` - the auth token from the lecacy service account  
-**Returns**  
-A connector instance that is used to execute commands to the REST API.
+> **Arguments**  
+> `project` - name of your database (before ".firebaseio.com")  
+> `secret` - the auth token from the lecacy service account  
 
-### Generic send
+> **Returns**  
+> A connector instance that is used to execute commands to the REST API.
+
+### Sending REST commands
 ```cs
 public TResult Send<TObject, TResult>(Method method, string objectPath, TObject obj = default(TObject), bool shallow = false, NameValueCollection queryParams = null)
 ```  
-**Arguments**  
-`method` - enum `Method`, defines the HTTP method to use  
-`objectPath` - the path from the root to the object to be read or written. If ending in `/` can fetch information on all children on that level.  
-`obj` - the object to read or write  
-`shallow` - if set to true, replaces all subnodes with `true`  
-`queryParams` - one or more key/value pairs that will be part of the query string  
-**Returns**  
-The resulting object or undefined for GET methods.
+> **Arguments**  
+> `method` - enum `Method`, defines the HTTP method to use  
+> `objectPath` - the path from the root to the object to be read or written
+> `obj` - the object to read or write  
+> `shallow` - if set to true, replaces all subnodes with `true`  
+> `queryParams` - one or more key/value pairs that will be part of the query string  
+
+> **Returns**  
+> The resulting object or undefined for GET methods.
 
 ### Convenience methods
+
 ```cs  
-// GET
+// Getting objects from the database:
 public TResult Get<TResult>(string objectPath, bool shallow = false, NameValueCollection queryParams = null)
+```
 
-// POST
+```cs
+// Creating new objects by create random node keys:
 public string Post<TObject>(string objectPath, TObject obj, NameValueCollection queryParams = null)
+```
 
-// PUT
+```cs
+// Inserting new objects with a given node key:
 public string Put<TObject>(string objectPath, TObject obj, NameValueCollection queryParams = null)
+```
 
-// PATCH
+```cs
+// Updating a specifc value in the object tree:
 public string Patch<TObject>(string objectPath, TObject obj, NameValueCollection queryParams = null)
+```
 
-// DELETE
+```cs
+// Removing an object:
 public string Delete(string objectPath, NameValueCollection queryParams = null)
 ```
 
 ## TODO
 
-For now, there is no error handling.
+For now, there is no error handling. If you have no internet connection, all methods return `null` (or the default value for the type).
 
 
 ---
