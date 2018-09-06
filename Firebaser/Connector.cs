@@ -1,6 +1,8 @@
 ﻿using fastJSON;
+using System;
 using System.Collections.Specialized;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 
 namespace Firebaser
@@ -26,18 +28,53 @@ namespace Firebaser
 
 	public class Connector
 	{
-		private readonly string firebaseUrl;
+		private readonly string hostName;
 		private readonly string secret;
+
+		const long refreshCheckInterval = 2; //sec
+
+		static DateTime nextNetworkCheck = DateTime.Now;
+		static bool cachedNetworkAvailability = false;
 
 		public Connector(string project, string secret)
 		{
-			firebaseUrl = "https://" + project + ".firebaseio.com";
+			hostName = project + ".firebaseio.com";
 			this.secret = secret;
+		}
+
+		public bool IsAvailable(bool forceCheck = false)
+		{
+			var now = DateTime.Now;
+			if (now > nextNetworkCheck || forceCheck)
+			{
+				nextNetworkCheck = now.AddSeconds(refreshCheckInterval);
+				try
+				{
+					var hostEntry = Dns.GetHostEntry(hostName);
+					if (hostEntry.AddressList.Length == 0)
+					{
+						cachedNetworkAvailability = false;
+						return cachedNetworkAvailability;
+					}
+					var remoteAddress = hostEntry.AddressList[0];
+					var endpoint = new IPEndPoint(remoteAddress, 80);
+					var socket = new Socket(remoteAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+					socket.Connect(endpoint);
+					socket.Shutdown(SocketShutdown.Both);
+					socket.Close();
+					cachedNetworkAvailability = true;
+				}
+				catch (Exception)
+				{
+					cachedNetworkAvailability = false;
+				}
+			}
+			return cachedNetworkAvailability;
 		}
 
 		public TResult Send<TObject, TResult>(Method method, string objectPath, TObject obj = default(TObject), bool shallow = false, NameValueCollection queryParams = null)
 		{
-			if (!InternetAvailability.IsAvailable())
+			if (!IsAvailable())
 				return default(TResult);
 
 			using (new PauseValidation())
@@ -48,7 +85,7 @@ namespace Firebaser
 				var json = JSON.ToJSON(obj, new JSONParameters() { UseExtensions = false });
 				if (objectPath.Length > 0 && !objectPath.StartsWith("/")) objectPath = "/" + objectPath;
 				string result = null;
-				var path = firebaseUrl + objectPath + ".json";
+				var path = "https://" + hostName + objectPath + ".json";
 				switch (method)
 				{
 					case Method.GET:

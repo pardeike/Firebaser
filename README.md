@@ -75,24 +75,6 @@ test-firebaser.firebaseio.com
 ---
 ## Firebaser API
 
-### Checking for an internet connection
-
-```cs
-public static class InternetAvailability
-{
-      public static bool IsAvailable(bool forceCheck = false)
-}
-```
-
-Example  
-```cs
-if(InternetAvailability.IsAvailable()
-{
-      // in here, you likely have internet
-}
-```
-*Note: The status will only be updated every 2 seconds so pass `true` in `forceCheck` to get an up-to-date status. Still, `IsAvailable` runs an asyncronous ping() which will time out after 300ms. To 100% make sure you get a correct status, you need to wait at least 300ms and call the method again (both with forceCheck=true).*  
-
 ### Constructor
 ```cs
 public Connector(string project, string secret)
@@ -103,6 +85,27 @@ public Connector(string project, string secret)
 
 > **Returns**  
 > A connector instance that is used to execute commands to the REST API.
+
+### Checking for an internet connection
+
+```cs
+public bool IsAvailable(bool forceCheck = false)
+```
+
+Example  
+```cs
+var databaseIdentifier = "test-firebaser";
+var authToken = "6Fw1CwwMfXqmuPtjHIPs0dTBH8AXGPksp5gyyTG4";
+var client = new Connector(databaseIdentifier, authToken);
+var status = client.IsAvailable();
+
+// Forcing an update:
+var status2 = client.IsAvailable(true);
+// Note: The internal status will only be updated every 2 seconds
+// so passing `true` in `forceCheck` will force a status update.
+// This will definitely add an extra connection request so try not
+// to spam that call too much
+```  
 
 ### Sending REST commands
 ```cs
@@ -116,7 +119,7 @@ public TResult Send<TObject, TResult>(Method method, string objectPath, TObject 
 > `queryParams` - one or more key/value pairs that will be part of the query string  
 
 > **Returns**  
-> The resulting object or undefined for GET methods.
+> The resulting object of type \<TResult> or `null` in case of a connection error
 
 ### Convenience methods
 
