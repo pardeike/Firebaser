@@ -91,9 +91,7 @@ if(InternetAvailability.IsAvailable()
       // in here, you likely have internet
 }
 ```
-*Note: The status will only be updated every 2 seconds so pass `true` in `forceCheck` to get an up-to-date status. Still, `IsAvailable` runs an asyncronous ping() which will time out after
-300ms. To 100% make sure you get a correct status, you need to wait at least 300ms and call
-the method again (both with forceCheck=true).*  
+*Note: The status will only be updated every 2 seconds so pass `true` in `forceCheck` to get an up-to-date status. Still, `IsAvailable` runs an asyncronous ping() which will time out after 300ms. To 100% make sure you get a correct status, you need to wait at least 300ms and call the method again (both with forceCheck=true).*  
 
 ### Constructor
 ```cs

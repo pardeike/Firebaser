@@ -17,6 +17,7 @@ namespace Firebaser
 		public static bool IsAvailable(bool forceCheck = false)
 		{
 			var now = DateTime.Now.Ticks;
+			var firstTime = nextNetworkCheck == 0;
 			if (now > nextNetworkCheck || forceCheck)
 			{
 				nextNetworkCheck = now + refreshCheckInterval;
@@ -24,7 +25,7 @@ namespace Firebaser
 				{
 					try
 					{
-						Ping();
+						Ping(firstTime || forceCheck);
 					}
 					catch (Exception)
 					{
@@ -35,7 +36,7 @@ namespace Firebaser
 			return cachedNetworkAvailability;
 		}
 
-		private static void Ping()
+		private static void Ping(bool synchronous)
 		{
 			if (networkCheckIP == null)
 			{
@@ -45,13 +46,21 @@ namespace Firebaser
 			}
 			if (networkCheckIP != null)
 			{
-				var ping = new System.Net.NetworkInformation.Ping();
-				ping.PingCompleted += (obj, sender) =>
+				var ping = new Ping();
+				if (synchronous)
 				{
-					cachedNetworkAvailability = (sender.Reply.Status == IPStatus.Success);
-				};
-				var buffer = new byte[32];
-				ping.SendAsync(networkCheckIP, maxPingTimeout);
+					var result = ping.Send(networkCheckIP, 2 * maxPingTimeout);
+					cachedNetworkAvailability = result.Status == IPStatus.Success;
+				}
+				else
+				{
+					ping.PingCompleted += (obj, sender) =>
+					{
+						cachedNetworkAvailability = (sender.Reply.Status == IPStatus.Success);
+					};
+					var buffer = new byte[32];
+					ping.SendAsync(networkCheckIP, maxPingTimeout);
+				}
 			}
 			else
 				cachedNetworkAvailability = false;
