@@ -31,7 +31,10 @@ namespace Firebaser
 		private readonly string hostName;
 		private readonly string secret;
 
-		const long refreshCheckInterval = 2; //sec
+		// timers in seconds
+		const long refreshCheckInterval = 2;
+		const int dnsTimeout = 1;
+		const int networkTimeout = 10;
 
 		static DateTime nextNetworkCheck = DateTime.Now;
 		static bool cachedNetworkAvailability = false;
@@ -50,19 +53,22 @@ namespace Firebaser
 				nextNetworkCheck = now.AddSeconds(refreshCheckInterval);
 				try
 				{
-					var hostEntry = Dns.GetHostEntry(hostName);
-					if (hostEntry.AddressList.Length == 0)
+					cachedNetworkAvailability = AsyncTools.RunActionWithTimeout(delegate ()
 					{
-						cachedNetworkAvailability = false;
-						return cachedNetworkAvailability;
-					}
-					var remoteAddress = hostEntry.AddressList[0];
-					var endpoint = new IPEndPoint(remoteAddress, 80);
-					var socket = new Socket(remoteAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-					socket.Connect(endpoint);
-					socket.Shutdown(SocketShutdown.Both);
-					socket.Close();
-					cachedNetworkAvailability = true;
+						var hostEntry = Dns.GetHostEntry(hostName);
+						if (hostEntry.AddressList.Length == 0)
+						{
+							cachedNetworkAvailability = false;
+							return cachedNetworkAvailability;
+						}
+						var remoteAddress = hostEntry.AddressList[0];
+						var endpoint = new IPEndPoint(remoteAddress, 80);
+						var socket = new Socket(remoteAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+						socket.Connect(endpoint);
+						socket.Shutdown(SocketShutdown.Both);
+						socket.Close();
+						return true;
+					}, 1000 * dnsTimeout);
 				}
 				catch (Exception)
 				{
@@ -79,30 +85,33 @@ namespace Firebaser
 
 			using (new PauseValidation())
 			{
-				var query = new NameValueCollection { { "auth", secret }, { "shallow", shallow ? "true" : "false" } };
-				if (queryParams != null) query.Add(queryParams);
-				var client = new WebClient { QueryString = query, Encoding = Encoding.UTF8 };
-				var json = JSON.ToJSON(obj, new JSONParameters() { UseExtensions = false });
-				if (objectPath.Length > 0 && !objectPath.StartsWith("/")) objectPath = "/" + objectPath;
-				string result = null;
-				var path = "https://" + hostName + objectPath + ".json";
-				switch (method)
+				return AsyncTools.RunActionWithTimeout<TResult>(delegate ()
 				{
-					case Method.GET:
-						result = client.DownloadString(path);
-						break;
-					case Method.POST:
-					case Method.PUT:
-					case Method.PATCH:
-						result = client.UploadString(path, method.ToString(), json);
-						break;
-					case Method.DELETE:
-						client.Headers.Add("X-HTTP-Method-Override", Method.DELETE.ToString());
-						result = client.DownloadString(path);
-						break;
-				}
-				if (result == null) return default(TResult);
-				return typeof(TResult) == typeof(string) ? (TResult)(result as object) : JSON.ToObject<TResult>(result);
+					var query = new NameValueCollection { { "auth", secret }, { "shallow", shallow ? "true" : "false" } };
+					if (queryParams != null) query.Add(queryParams);
+					var client = new WebClient { QueryString = query, Encoding = Encoding.UTF8 };
+					var json = JSON.ToJSON(obj, new JSONParameters() { UseExtensions = false });
+					if (objectPath.Length > 0 && !objectPath.StartsWith("/")) objectPath = "/" + objectPath;
+					string result = null;
+					var path = "https://" + hostName + objectPath + ".json";
+					switch (method)
+					{
+						case Method.GET:
+							result = client.DownloadString(path);
+							break;
+						case Method.POST:
+						case Method.PUT:
+						case Method.PATCH:
+							result = client.UploadString(path, method.ToString(), json);
+							break;
+						case Method.DELETE:
+							client.Headers.Add("X-HTTP-Method-Override", Method.DELETE.ToString());
+							result = client.DownloadString(path);
+							break;
+					}
+					if (result == null) return default(TResult);
+					return typeof(TResult) == typeof(string) ? (TResult)(result as object) : JSON.ToObject<TResult>(result);
+				}, 1000 * networkTimeout);
 			}
 		}
 
